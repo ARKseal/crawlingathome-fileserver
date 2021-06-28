@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from flask import Flask, flash, redirect, request, send_file, url_for
+from quart import Quart, request, send_file
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './files/'
@@ -39,3 +39,5 @@ def delete_file(shard_id: int):
     file_path = Path(os.path.join(app.config['UPLOAD_FOLDER'], f"{shard_id}.tar"))
     if not file_path.exists():
         return 'Invalid file ID', 404
+
+app.run("0.0.0.0", 80)
