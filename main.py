@@ -8,7 +8,7 @@ UPLOAD_FOLDER = './files/'
 ALLOWED_EXTENSIONS = {'tar'}
 
 
-app = Flask(__name__)
+app = Quart(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
