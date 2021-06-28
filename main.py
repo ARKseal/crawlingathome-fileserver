@@ -1,9 +1,12 @@
-from flask import Flask, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
 import os
+from pathlib import Path
+
+from flask import Flask, flash, redirect, request, send_file, url_for
+from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './files/'
-ALLOWED_EXTENSIONS = {'tar', 'json'}
+ALLOWED_EXTENSIONS = {'tar'}
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -22,5 +25,17 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return "saved"
+        return {'url': f"{request.environ['SERVER_NAME']}/download/{file.filename}"}
 
+@app.route('/download/{shard_id}', methods=['GET'])
+def download_file(shard_id: int):
+    file_path = Path(os.path.join(app.config['UPLOAD_FOLDER'], f"{shard_id}.tar"))
+    if not file_path.exists():
+        return 'Invalid file ID', 404
+    return send_file(str(file_path.absolute()), mimetype="application/x-tar")
+    
+@app.route('/delete/{shard_id}', methods=['DELETE'])
+def delete_file(shard_id: int):
+    file_path = Path(os.path.join(app.config['UPLOAD_FOLDER'], f"{shard_id}.tar"))
+    if not file_path.exists():
+        return 'Invalid file ID', 404
