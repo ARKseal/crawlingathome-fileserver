@@ -16,7 +16,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['POST'])
-def upload_file():
+async def upload_file():
     file = request.files['file']
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
@@ -28,14 +28,14 @@ def upload_file():
         return {'url': f"{request.environ['SERVER_NAME']}/download/{file.filename}"}
 
 @app.route('/download/{shard_id}', methods=['GET'])
-def download_file(shard_id: int):
+async def download_file(shard_id: int):
     file_path = Path(os.path.join(app.config['UPLOAD_FOLDER'], f"{shard_id}.tar"))
     if not file_path.exists():
         return 'Invalid file ID', 404
     return send_file(str(file_path.absolute()), mimetype="application/x-tar")
     
 @app.route('/delete/{shard_id}', methods=['DELETE'])
-def delete_file(shard_id: int):
+async def delete_file(shard_id: int):
     file_path = Path(os.path.join(app.config['UPLOAD_FOLDER'], f"{shard_id}.tar"))
     if not file_path.exists():
         return 'Invalid file ID', 404
