@@ -23,7 +23,7 @@ async def upload_file():
     file = files.get('file')
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
-                f"{file.filename.split(':')[0]}.{extension}")) \
+                f"{file.filename.split('.')[0]}.{extension}")) \
             for extension in app.config['ALLOWED_EXTENSIONS'] ]
 
     # If the user does not select a file, the browser submits an
