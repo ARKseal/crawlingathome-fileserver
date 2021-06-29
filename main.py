@@ -5,7 +5,7 @@ from quart import Quart, request, Response
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './files/'
-ALLOWED_EXTENSIONS = {'tar'}
+ALLOWED_EXTENSIONS = {'tar', 'txt'}
 
 app = Quart(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -41,7 +41,7 @@ async def upload_file():
     if file:
         filename = secure_filename(file.filename)
         await file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return {'url': f"/download/{filename}"}
+        return {'url': f"{request.url_root}/download/{filename.split('.')[0]}"}
 
 @app.route('/download/<shard_id>', methods=['GET'])
 async def download_file(shard_id):
