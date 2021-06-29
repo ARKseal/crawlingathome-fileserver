@@ -55,7 +55,10 @@ async def download_file(shard_id: int):
 
     def _generator():
         with open([str(path.resolve()) for path in file_paths if path.exists()][0], 'rb') as f:
-            yield f.read(app.config['CHUNK_SIZE'])
+            while True:
+                chunk = f.read(app.config['CHUNK_SIZE'])
+                if len(chunk) == 0: break
+                yield f.read(app.config['CHUNK_SIZE'])
 
     return Response(_generator(), mimetype="")
 
