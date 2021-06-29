@@ -43,8 +43,8 @@ async def upload_file():
         await file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return {'url': f"/download/{filename}"}
 
-@app.route('/download/<int:shard_id>', methods=['GET'])
-async def download_file(shard_id: int):
+@app.route('/download/<shard_id>', methods=['GET'])
+async def download_file(shard_id):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
                 f"{shard_id}.{extension}")) \
@@ -53,17 +53,24 @@ async def download_file(shard_id: int):
     if not any([path.exists() for path in file_paths]):
         return 'Invalid file ID', 404
 
+    path = [path for path in file_paths if path.exists()][0]
     def _generator():
-        with open([str(path.resolve()) for path in file_paths if path.exists()][0], 'rb') as f:
+        with open(path, 'rb') as f:
             while True:
                 chunk = f.read(app.config['CHUNK_SIZE'])
-                if len(chunk) == 0: break
+                if not chunk: break
                 yield chunk
 
-    return Response(_generator(), mimetype="")
+    response = Response(_generator(), mimetype="application/x-tar", \
+        headers = {
+            'Content-Disposition': f'attachment; filename={path.name}',
+            'content-length': os.path.getsize(path)
+        })
+    response.timeout = app.config['BODY_TIMEOUT']
+    return response
 
-@app.route('/delete/<int:shard_id>', methods=['DELETE'])
-async def delete_file(shard_id: int):
+@app.route('/delete/<shard_id>', methods=['DELETE'])
+async def delete_file(shard_id):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
                 f"{shard_id}.{extension}")) \
@@ -72,7 +79,9 @@ async def delete_file(shard_id: int):
     if not any([path.exists() for path in file_paths]):
         return 'Invalid file ID', 404
 
-    os.remove([str(path.absolute()) for path in file_paths if path.exists()][0])
+    path = [path for path in file_paths if path.exists()][0]
+    os.remove(path)
+
     return 'File removed'
 
 if __name__ == '__main__':
