@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from quart import Quart, request, send_file
+from quart import Quart, request, Response
 from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './files/'
@@ -12,6 +12,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 # 1 gb
 app.config['BODY_TIMEOUT'] = 60 * 60 # 1 hour
+app.config['CHUNK_SIZE'] = 8192
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -42,7 +43,7 @@ async def upload_file():
         await file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return {'url': f"/download/{filename}"}
 
-@app.route('/download/<shard_id>', methods=['GET'])
+@app.route('/download/<int:shard_id>', methods=['GET'])
 async def download_file(shard_id: int):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
@@ -52,9 +53,13 @@ async def download_file(shard_id: int):
     if not any([path.exists() for path in file_paths]):
         return 'Invalid file ID', 404
 
-    return await send_file([str(path.resolve()) for path in file_paths if path.exists()][0])
+    def _generator():
+        with open([str(path.resolve()) for path in file_paths if path.exists()][0], 'rb') as f:
+            yield f.read(app.config['CHUNK_SIZE'])
 
-@app.route('/delete/<shard_id>', methods=['DELETE'])
+    return Response(_generator(), mimetype="")
+
+@app.route('/delete/<int:shard_id>', methods=['DELETE'])
 async def delete_file(shard_id: int):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
