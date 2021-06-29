@@ -58,7 +58,7 @@ async def download_file(shard_id: int):
             while True:
                 chunk = f.read(app.config['CHUNK_SIZE'])
                 if len(chunk) == 0: break
-                yield f.read(app.config['CHUNK_SIZE'])
+                yield chunk
 
     return Response(_generator(), mimetype="")
 
