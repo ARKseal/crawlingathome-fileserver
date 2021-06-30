@@ -43,7 +43,7 @@ async def upload_file():
         await file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return {'url': f"{request.url_root}/download/{filename.split('.')[0]}"}
 
-@app.route('/download/<shard_id>', methods=['GET'])
+@app.route('/file/<shard_id>', methods=['GET'])
 async def download_file(shard_id):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
@@ -54,6 +54,7 @@ async def download_file(shard_id):
         return 'Invalid file ID', 404
 
     path = [path for path in file_paths if path.exists()][0]
+
     def _generator():
         with open(path, 'rb') as f:
             while True:
@@ -67,9 +68,10 @@ async def download_file(shard_id):
             'content-length': os.path.getsize(path)
         })
     response.timeout = app.config['BODY_TIMEOUT']
+
     return response
 
-@app.route('/delete/<shard_id>', methods=['DELETE'])
+@app.route('/file/<shard_id>', methods=['DELETE'])
 async def delete_file(shard_id):
     file_paths = [ \
             Path( os.path.join(app.config['UPLOAD_FOLDER'], \
