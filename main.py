@@ -41,7 +41,7 @@ async def upload_file():
     if file:
         filename = secure_filename(file.filename)
         await file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return {'url': f"{request.url_root}/download/{filename.split('.')[0]}"}
+        return {'url': f"{request.url_root}file/{filename.split('.')[0]}"}
 
 @app.route('/file/<shard_id>', methods=['GET'])
 async def download_file(shard_id):
